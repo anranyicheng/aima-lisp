@@ -38,7 +38,7 @@
   "Remove the element from the front of the queue and return it."
   (if (listp (q-elements q))
       (pop (q-elements q))
-    (heap-extract-min (q-elements q) (q-key q))))
+      (heap-extract-min (q-elements q) (q-key q))))
 
 ;;;; The Three Enqueing Functions
 
@@ -50,11 +50,11 @@
   "Add a list of items to the end of the queue."
   ;; To make this more efficient, keep a pointer to the last cons in the queue
   (cond ((null items) nil)
-	((or (null (q-last q)) (null (q-elements q)))
-	 (setf (q-last q) (last items)
-	       (q-elements q) (nconc (q-elements q) items)))
-	(t (setf (cdr (q-last q)) items
-		 (q-last q) (last items)))))
+		((or (null (q-last q)) (null (q-elements q)))
+		 (setf (q-last q) (last items)
+			   (q-elements q) (nconc (q-elements q) items)))
+		(t (setf (cdr (q-last q)) items
+				 (q-last q) (last items)))))
 
 (defun enqueue-by-priority (q items key)
   "Insert the items by priority according to the key function."
@@ -64,7 +64,7 @@
     (setf (q-elements q) (make-heap)))
   ;; Now insert the items
   (for each item in items do
-       (heap-insert (q-elements q) item key)))
+      (heap-insert (q-elements q) item key)))
 
 ;;;; The Heap Implementation of Priority Queues
 
@@ -75,24 +75,36 @@
 
 ;; These could be made inline
 
-(defun heap-val (heap i key) (declare (fixnum i)) (funcall key (aref heap i)))
-(defun heap-parent (i) (declare (fixnum i)) (floor (- i 1) 2))
-(defun heap-left (i) (declare (fixnum i)) (the fixnum (+ 1 i i)))
-(defun heap-right (i) (declare (fixnum i)) (the fixnum (+ 2 i i)))
+(defun heap-val (heap i key)
+  (declare (fixnum i))
+  (funcall key (aref heap i)))
+(defun heap-parent (i)
+  (declare (fixnum i))
+  (floor (- i 1) 2))
+(defun heap-left (i)
+  (declare (fixnum i))
+  (the fixnum (+ 1 i i)))
+(defun heap-right (i)
+  (declare (fixnum i))
+  (the fixnum (+ 2 i i)))
 
 (defun heapify (heap i key)
   "Assume that the children of i are heaps, but that heap[i] may be 
   larger than its children.  If it is, move heap[i] down where it belongs.
   [Page 143 CL&R]."
   (let ((l (heap-left i))
-	(r (heap-right i))
-	(N (- (length heap) 1))
-	smallest)
-    (setf smallest (if (and (<= l N) (<= (heap-val heap l key)
-					 (heap-val heap i key)))
-		       l i))
-    (if (and (<= r N) (<= (heap-val heap r key) (heap-val heap smallest key)))
-	(setf smallest r))
+		(r (heap-right i))
+		(N (- (length heap) 1))
+		smallest)
+    (setf smallest
+		  (if (and (<= l N)
+				   (<= (heap-val heap l key)
+					   (heap-val heap i key)))
+			  l i))
+    (if (and (<= r N)
+			 (<= (heap-val heap r key)
+				 (heap-val heap smallest key)))
+		(setf smallest r))
     (when (/= smallest i)
       (rotatef (aref heap i) (aref heap smallest))
       (heapify heap smallest key))))
@@ -111,10 +123,13 @@
   ;; that extracts the numeric value from the item.
   (vector-push-extend nil heap)
   (let ((i (- (length heap) 1))
-	(val (funcall key item)))
-    (while (and (> i 0) (>= (heap-val heap (heap-parent i) key) val))
-      do (setf (aref heap i) (aref heap (heap-parent i))
-	       i (heap-parent i)))
+		(val (funcall key item)))
+    (while (and (> i 0)
+				(>= (heap-val heap (heap-parent i) key) val))
+		do (setf (aref heap i)
+				 (aref heap (heap-parent i))
+				 i
+				 (heap-parent i)))
     (setf (aref heap i) item)))
 
 (defun make-heap (&optional (size 100))
@@ -125,7 +140,21 @@
   ;; Mostly for testing the heap implementation
   ;; There are more efficient ways of sorting (even of heap-sorting)
   (let ((heap (make-heap))
-	(result nil))
+		(result nil))
     (for each n in numbers do (heap-insert heap n key))
-    (while (> (length heap) 0) do (push (heap-extract-min heap key) result))
+    (while (> (length heap) 0)
+		do (push (heap-extract-min heap key) result))
     (nreverse result)))
+
+;; ;; example
+;; (defparameter *q1* (make-empty-queue))
+;; (enqueue-at-end *q1* (list 123))
+;; (enqueue-at-front *q1* (list 345))
+
+;; ENQUEUE-BY-PRIORITY
+;; (defparameter *q2* (make-empty-queue))
+;; (enqueue-by-priority *q2* '(123 456) (lambda(x) x))
+;; (enqueue-by-priority *q2* '(120 234) (lambda(x) x))
+;; (heap-extract-min (q-elements *q2*)
+;; 				  (q-key *q2*))
+;; (enqueue-by-priority *q2* '(1200 1234) (lambda(x) x))
